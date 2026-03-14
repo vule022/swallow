@@ -1,0 +1,6 @@
+/swallow
+dist/
+*.db
+.DS_Store
+*.test
+coverage.out
