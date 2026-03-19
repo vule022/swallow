@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/vule022/swallow/internal/config"
+	"github.com/vule022/swallow/internal/planner"
 	"github.com/vule022/swallow/internal/project"
 	"github.com/vule022/swallow/internal/storage"
 )
@@ -21,6 +22,7 @@ type Container struct {
 	Repos    *storage.Repos
 	Projects *project.Manager
 	DB       *storage.DB
+	Planner  planner.Planner
 }
 
 // NewRootCmd builds the root cobra command tree.

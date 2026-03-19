@@ -7,6 +7,7 @@ import (
 
 	"github.com/vule022/swallow/internal/cli"
 	"github.com/vule022/swallow/internal/config"
+	"github.com/vule022/swallow/internal/planner"
 	"github.com/vule022/swallow/internal/project"
 	"github.com/vule022/swallow/internal/storage"
 )
@@ -27,6 +28,14 @@ func Run() int {
 
 	container := &cli.Container{
 		Config: cfg,
+	}
+
+	// Wire up planner (noop if no API key).
+	apiKey := config.APIKey()
+	if apiKey != "" {
+		container.Planner = planner.New(cfg, apiKey)
+	} else {
+		container.Planner = &planner.NoopPlanner{}
 	}
 
 	// DB may not exist yet (before `swallow init`).
