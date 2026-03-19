@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/vule022/swallow/internal/ingest"
 	"github.com/vule022/swallow/internal/model"
+	"github.com/vule022/swallow/internal/session"
 	"github.com/vule022/swallow/internal/storage"
 )
 
@@ -67,10 +68,9 @@ func newIngestOutputCmd(c *Container) *cobra.Command {
 			if err := requireDB(c); err != nil {
 				return err
 			}
-			cwd, _ := os.Getwd()
-			p, err := c.Projects.ResolveActive(cmd.Context(), cwd)
+			p, err := requireActiveProject(cmd, c)
 			if err != nil {
-				return fmt.Errorf("no active project: run 'swallow project use <name>'")
+				return err
 			}
 
 			var rawText string
@@ -114,16 +114,35 @@ func newIngestOutputCmd(c *Container) *cobra.Command {
 				CreatedAt:             time.Now().UTC(),
 			}
 
-			if err := c.Repos.Outputs.Save(cmd.Context(), output); err != nil {
+			// Normalize using LLM if available.
+			ctx := cmd.Context()
+			sessMgr := session.New(c.Repos, c.Planner)
+			if err := sessMgr.NormalizeOutput(ctx, output); err != nil {
+				fmt.Fprintf(os.Stderr, "warning: normalization failed: %v\n", err)
+			}
+
+			if err := c.Repos.Outputs.Save(ctx, output); err != nil {
 				return fmt.Errorf("save output: %w", err)
+			}
+
+			entry, err := sessMgr.RecordFromOutput(ctx, output)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "warning: record session: %v\n", err)
 			}
 
 			fmt.Printf("Saved coding output from '%s' to project '%s'\n", source, p.Name)
 			fmt.Printf("  ID: %s\n", output.ID)
-			fmt.Println("  Tip: use 'swallow spit' to incorporate this into your next session brief.")
+			if output.Goal != "" {
+				fmt.Printf("  Goal: %s\n", output.Goal)
+			}
+			if len(output.NextActions) > 0 {
+				fmt.Printf("  Next actions: %d extracted\n", len(output.NextActions))
+			}
+			if entry != nil && entry.NextAction != "" {
+				fmt.Printf("  Suggested next: %s\n", entry.NextAction)
+			}
+			fmt.Println("\n  Tip: run 'swallow spit' to incorporate this into your next session brief.")
 
-			_ = recordSession(cmd.Context(), c, p.ID, model.SessionTypeCodingOutputIngest,
-				fmt.Sprintf("Ingested coding output from %s", source), "")
 			return nil
 		},
 	}
