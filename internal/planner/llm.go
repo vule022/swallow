@@ -97,18 +97,23 @@ func (p *LLMPlanner) Compress(ctx context.Context, text string) (*CompressResult
 // extractJSON strips markdown fences and finds the outermost JSON object.
 func extractJSON(s string) string {
 	s = strings.TrimSpace(s)
-	// Strip ```json ... ``` fences.
-	if strings.HasPrefix(s, "```") {
-		end := strings.LastIndex(s, "```")
-		if end > 3 {
-			s = s[3:end]
-			if strings.HasPrefix(s, "json") {
-				s = s[4:]
+
+	// Strip ```json ... ``` or ``` ... ``` fences.
+	for _, fence := range []string{"```json", "```JSON", "```"} {
+		if strings.Contains(s, fence) {
+			start := strings.Index(s, fence)
+			if start >= 0 {
+				inner := s[start+len(fence):]
+				end := strings.Index(inner, "```")
+				if end >= 0 {
+					s = strings.TrimSpace(inner[:end])
+					break
+				}
 			}
-			s = strings.TrimSpace(s)
 		}
 	}
-	// Find first { and last }.
+
+	// Find first { and last } to extract the JSON object.
 	start := strings.Index(s, "{")
 	end := strings.LastIndex(s, "}")
 	if start == -1 || end == -1 || end <= start {
