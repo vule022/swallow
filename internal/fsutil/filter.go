@@ -48,6 +48,12 @@ func (f Filter) ShouldIncludeDir(name string) bool {
 			return false
 		}
 	}
+	// Skip most hidden directories (starting with '.') by default.
+	// Exception: the ignore list already covers .git explicitly.
+	// Other hidden dirs like .vscode, .idea, etc. are usually noise.
+	if strings.HasPrefix(name, ".") && name != "." {
+		return false
+	}
 	return true
 }
 
