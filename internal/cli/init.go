@@ -39,12 +39,27 @@ func newInitCmd(c *Container) *cobra.Command {
 				return fmt.Errorf("cannot initialise database: %w", err)
 			}
 			db.Close()
-			fmt.Printf("Database ready: %s\n", dbPath)
+			fmt.Printf("Database ready:  %s\n", dbPath)
+
+			// Create inbox and hooks directories.
+			inboxDir := filepath.Join(dir, config.InboxDirName)
+			if err := os.MkdirAll(filepath.Join(inboxDir, config.ProcessedDirName), 0o700); err != nil {
+				return fmt.Errorf("cannot create inbox dir: %w", err)
+			}
+			fmt.Printf("Inbox ready:     %s\n", inboxDir)
+
+			hooksDir := filepath.Join(dir, config.HooksDirName)
+			if err := os.MkdirAll(hooksDir, 0o700); err != nil {
+				return fmt.Errorf("cannot create hooks dir: %w", err)
+			}
 
 			fmt.Println("\nSwallow is ready. Next:")
 			fmt.Println("  cd /path/to/your/project")
 			fmt.Println("  swallow project init --name <name>")
 			fmt.Printf("\nSet your API key:  export %s=sk-...\n", config.EnvAPIKey)
+			fmt.Println("\nAuto-ingest from coding agents:")
+			fmt.Println("  swallow hooks install          # set up Claude Code, Cursor, Codex")
+			fmt.Println("  swallow watch                  # watch the inbox in another terminal")
 			return nil
 		},
 	}
