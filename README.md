@@ -207,3 +207,81 @@ All data is stored locally in `~/.swallow/swallow.db` (SQLite). Nothing is sent 
 | `compact` | 2 outputs, 3 docs | title, goal, execution plan, copy prompt |
 | `standard` | 5 outputs, 8 docs | + why now, context, files, constraints, validation |
 | `detailed` | 10 outputs, 15 docs | all sections, maximum context |
+
+---
+
+## Multi-Agent Auto-Ingestion
+
+Swallow works with any coding agent. Use `swallow watch` and `swallow hooks install` to automate ingestion so you never need to copy-paste agent outputs manually.
+
+### `swallow watch [--dir <path>] [--project <name>]`
+
+Watches `~/.swallow/inbox/` for new files and ingests them automatically.
+
+```bash
+# In a separate terminal (or background):
+swallow watch
+
+# Now drop any agent output into the inbox:
+cp my_agent_output.md ~/.swallow/inbox/
+# → swallow ingests it immediately
+```
+
+Files are moved to `~/.swallow/inbox/processed/` after ingestion.
+
+### `swallow hooks install [--agent claude-code|cursor|codex|all]`
+
+Set up automatic ingestion for each agent:
+
+```bash
+swallow hooks install              # install for all agents
+swallow hooks install --agent claude-code
+swallow hooks install --agent cursor
+swallow hooks install --agent codex
+```
+
+#### Claude Code
+
+Adds a `Stop` hook to `~/.claude/settings.json`. Every time a Claude Code session ends, the transcript is automatically ingested into swallow — no manual action required.
+
+```bash
+swallow hooks install --agent claude-code
+# Then start swallow watch in the background, and every Claude Code
+# session is automatically captured.
+```
+
+#### Cursor
+
+Creates `~/.swallow/hooks/cursor-export.sh`. Run it after a Cursor session:
+
+```bash
+~/.swallow/hooks/cursor-export.sh
+```
+
+#### Codex (OpenAI CLI)
+
+Pipe directly:
+
+```bash
+codex "fix the auth flow" | swallow ingest-output --stdin
+```
+
+Or add the alias to your shell:
+
+```bash
+alias codex-ingest='codex "$@" | swallow ingest-output --stdin'
+codex-ingest "fix the auth flow"
+```
+
+### Recommended workflow
+
+```bash
+# Once, after installing swallow:
+swallow hooks install --agent claude-code
+
+# In a background terminal:
+swallow watch
+
+# Now every Claude Code session → automatically available for:
+swallow spit "what should I work on next"
+```
