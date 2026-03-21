@@ -58,6 +58,8 @@ Run 'swallow init' to get started.`,
 		newSpitCmd(c),
 		newExportCmd(c),
 		newDoctorCmd(c),
+		newWatchCmd(c),
+		newHooksCmd(c),
 	)
 
 	return cmd
