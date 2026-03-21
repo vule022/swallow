@@ -12,4 +12,8 @@ const (
 	ConfigDirName  = ".swallow"
 	ConfigFileName = "config.json"
 	DBFileName     = "swallow.db"
+
+	InboxDirName     = "inbox"
+	ProcessedDirName = "processed"
+	HooksDirName     = "hooks"
 )
