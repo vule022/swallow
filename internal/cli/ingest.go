@@ -99,35 +99,10 @@ func newIngestOutputCmd(c *Container) *cobra.Command {
 				return fmt.Errorf("input is empty")
 			}
 
-			output := &model.CodingOutput{
-				ID:                    uuid.New().String(),
-				ProjectID:             p.ID,
-				Source:                source,
-				RawText:               rawText,
-				Actions:               []string{},
-				Files:                 []string{},
-				Decisions:             []string{},
-				Blockers:              []string{},
-				NextActions:           []string{},
-				ValidationNotes:       []string{},
-				CommitRecommendations: []string{},
-				CreatedAt:             time.Now().UTC(),
-			}
-
-			// Normalize using LLM if available.
 			ctx := cmd.Context()
-			sessMgr := session.New(c.Repos, c.Planner)
-			if err := sessMgr.NormalizeOutput(ctx, output); err != nil {
-				fmt.Fprintf(os.Stderr, "warning: normalization failed: %v\n", err)
-			}
-
-			if err := c.Repos.Outputs.Save(ctx, output); err != nil {
-				return fmt.Errorf("save output: %w", err)
-			}
-
-			entry, err := sessMgr.RecordFromOutput(ctx, output)
+			output, entry, err := ingestRawText(ctx, c, p.ID, source, rawText)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "warning: record session: %v\n", err)
+				return err
 			}
 
 			fmt.Printf("Saved coding output from '%s' to project '%s'\n", source, p.Name)
@@ -149,6 +124,42 @@ func newIngestOutputCmd(c *Container) *cobra.Command {
 
 	cmd.Flags().BoolVar(&fromStdin, "stdin", false, "read from stdin")
 	return cmd
+}
+
+// ingestRawText runs the full ingest-output pipeline on rawText.
+// It is the single canonical place for building CodingOutput, normalizing,
+// saving, and recording a session. Called by ingest-output, watch, and hooks run.
+func ingestRawText(ctx context.Context, c *Container, projectID, source, rawText string) (*model.CodingOutput, *model.SessionEntry, error) {
+	output := &model.CodingOutput{
+		ID:                    uuid.New().String(),
+		ProjectID:             projectID,
+		Source:                source,
+		RawText:               rawText,
+		Actions:               []string{},
+		Files:                 []string{},
+		Decisions:             []string{},
+		Blockers:              []string{},
+		NextActions:           []string{},
+		ValidationNotes:       []string{},
+		CommitRecommendations: []string{},
+		CreatedAt:             time.Now().UTC(),
+	}
+
+	sessMgr := session.New(c.Repos, c.Planner)
+	if err := sessMgr.NormalizeOutput(ctx, output); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: normalization failed: %v\n", err)
+	}
+
+	if err := c.Repos.Outputs.Save(ctx, output); err != nil {
+		return nil, nil, fmt.Errorf("save output: %w", err)
+	}
+
+	entry, err := sessMgr.RecordFromOutput(ctx, output)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: record session: %v\n", err)
+	}
+
+	return output, entry, nil
 }
 
 func recordSession(ctx context.Context, c *Container, projectID, sessionType, summary, nextAction string) error {
