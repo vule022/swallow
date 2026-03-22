@@ -285,3 +285,46 @@ swallow watch
 # Now every Claude Code session → automatically available for:
 swallow spit "what should I work on next"
 ```
+
+---
+
+## Contributing
+
+Contributions are welcome and appreciated — from anyone.
+
+Whether you're fixing a bug, adding support for a new agent, improving the prompt quality, or just fixing a typo in the docs — please open a PR. There are no gatekeepers here.
+
+### Getting started
+
+```bash
+git clone https://github.com/vule022/swallow
+cd swallow
+go build ./...
+go test ./...
+```
+
+No CGO, no Docker, no setup beyond a working Go installation.
+
+### Ideas for contributions
+
+- **New agent integrations** — Cursor native export, GitHub Copilot, Windsurf, Aider, etc.
+- **Prompt quality** — better `copy_ready_prompt` output for specific languages or frameworks
+- **Storage backends** — PostgreSQL, cloud sync
+- **Shell completions** — bash, zsh, fish
+- **TUI** — interactive session browser
+- **Tests** — more coverage for CLI commands, ingest pipeline, planner
+
+### Guidelines
+
+- Keep PRs focused — one thing at a time
+- `go build ./...` and `go test ./...` must pass
+- No external dependencies without a good reason
+- If you're unsure whether something fits, open an issue first
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+Free to use, modify, and distribute. Build something great.
