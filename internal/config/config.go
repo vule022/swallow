@@ -80,7 +80,10 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("config: parse %s: %w", path, err)
 	}
 
-	// Apply defaults for zero-value fields.
+	// Re-apply defaults for required string fields explicitly blanked in the
+	// file. Numeric fields are intentionally left alone: cfg started from
+	// Defaults(), so an absent value already holds its default, and an explicit
+	// zero (e.g. temperature: 0 for deterministic output) must be respected.
 	if cfg.Provider == "" {
 		cfg.Provider = DefaultProvider
 	}
@@ -89,12 +92,6 @@ func Load() (*Config, error) {
 	}
 	if cfg.BaseURL == "" {
 		cfg.BaseURL = DefaultBaseURL
-	}
-	if cfg.MaxTokens == 0 {
-		cfg.MaxTokens = DefaultMaxTokens
-	}
-	if cfg.Temperature == 0 {
-		cfg.Temperature = DefaultTemperature
 	}
 	if cfg.CopyMode == "" {
 		cfg.CopyMode = DefaultCopyMode

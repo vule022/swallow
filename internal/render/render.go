@@ -10,23 +10,20 @@ import (
 	"github.com/vule022/swallow/internal/model"
 )
 
-// Renderer writes formatted output to a writer.
+// Renderer writes formatted output to a writer. Color is controlled globally by
+// the color package (color.NoColor), which auto-detects TTY support.
 type Renderer struct {
-	w     io.Writer
-	color bool
+	w io.Writer
 }
 
-// New creates a Renderer writing to stdout with auto-detected color support.
+// New creates a Renderer writing to stdout.
 func New() *Renderer {
-	return &Renderer{
-		w:     os.Stdout,
-		color: color.NoColor == false,
-	}
+	return &Renderer{w: os.Stdout}
 }
 
 // NewWriter creates a Renderer writing to the given writer.
 func NewWriter(w io.Writer) *Renderer {
-	return &Renderer{w: w, color: false}
+	return &Renderer{w: w}
 }
 
 var (

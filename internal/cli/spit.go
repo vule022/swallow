@@ -80,13 +80,7 @@ The goal can be vague or in any language:
 			r := render.New()
 			r.PlanResult(result, compactOnly)
 
-			// Record session.
-			_ = recordSession(ctx, c, p.ID, model.SessionTypeSpit,
-				fmt.Sprintf("spit: %s → %s", goal, result.Title),
-				"",
-			)
-
-			// Save the spit result as a session entry with the plan details.
+			// Record the spit as a single session entry with the plan details.
 			entry := &model.SessionEntry{
 				ID:            uuid.New().String(),
 				ProjectID:     p.ID,
